@@ -17,7 +17,12 @@
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px}
 #app{display:flex;height:100vh;overflow:hidden}
 /* NAV */
-#nav{width:310px;flex-shrink:0;border-right:1px solid var(--bdr);display:flex;flex-direction:column;background:var(--bg2)}
+#nav{width:310px;flex-shrink:0;border-right:1px solid var(--bdr);display:flex;flex-direction:column;background:var(--bg2);transition:width .28s cubic-bezier(.4,0,.2,1);overflow:hidden}
+#nav.collapsed{width:0;border-right:none}
+#nav.collapsed .nhdr,#nav.collapsed .pbw,#nav.collapsed #modlist{opacity:0;pointer-events:none;transition:opacity .1s}
+#nav:not(.collapsed) .nhdr,#nav:not(.collapsed) .pbw,#nav:not(.collapsed) #modlist{opacity:1;pointer-events:auto;transition:opacity .2s .1s}
+.nav-toggle{width:30px;height:30px;border-radius:6px;border:1px solid var(--bdr2);background:var(--bg3);color:var(--txt2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .18s;flex-shrink:0}
+.nav-toggle:hover{background:var(--bg4);color:var(--txt);border-color:var(--purple)}
 .nhdr{padding:12px 14px 10px;border-bottom:1px solid var(--bdr);flex-shrink:0}
 .ntit{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:9px}
 .srch{width:100%;padding:7px 11px;border:1px solid var(--bdr2);border-radius:6px;background:var(--bg3);color:var(--txt);font-size:13px;outline:none;transition:border .15s}
@@ -49,6 +54,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font
 /* MAIN */
 #main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 .vhdr{padding:9px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-shrink:0;min-height:44px;background:var(--bg2)}
+.credit{font-size:11px;color:var(--txt3);flex-shrink:0;display:flex;align-items:center;gap:5px;margin-left:4px}
+.credit a{color:var(--purple);text-decoration:none;transition:color .15s}
+.credit a:hover{color:var(--blue);text-decoration:underline}
 .vbadge{font-size:10px;font-weight:700;letter-spacing:.07em;padding:2px 9px;border-radius:4px;flex-shrink:0}
 .vtit{font-size:14px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vbtns{display:flex;gap:6px;flex-shrink:0}
@@ -123,7 +131,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 
 </style>
 </head>
-<body>
+<body oncontextmenu="return false" onselectstart="return false">
 <div id="app">
 <div id="nav">
   <div class="nhdr">
@@ -135,6 +143,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 </div>
 <div id="main">
   <div class="vhdr">
+    <button class="nav-toggle" id="navToggle" onclick="toggleNav()" title="Toggle sidebar">◀</button>
     <span class="vbadge" id="vbadge" style="background:rgba(106,104,128,.15);color:var(--txt3)">—</span>
     <span class="vtit" id="vtit">Click any slide — animated slides auto-play</span>
     <div class="vbtns">
@@ -142,6 +151,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
       <button class="vbtn on" id="pbtn" onclick="togglePlay()" style="display:none">&#9646;&#9646; Pause</button>
       <button class="vbtn" onclick="navSlide(+1)">Next &#8594;</button>
     </div>
+    <span class="credit">Thanks to <a href="https://eee.nitk.ac.in/faculty/b-dastagiri-reddy" target="_blank">Dr. B. Dastagiri Reddy</a></span>
   </div>
   <div id="vbody">
     <canvas id="vc"></canvas>
@@ -176,6 +186,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 <script>
 
 'use strict';
+
+// ═══════════════════════════════════════════════
+//  SOURCE PROTECTION — disable view-source shortcuts
+// ═══════════════════════════════════════════════
+window.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();return false;},true);
+document.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();return false;},true);
+window.addEventListener('keydown',function(e){
+  // F12
+  if(e.key==='F12'){e.preventDefault();return false;}
+  // Ctrl+U (view source)
+  if(e.ctrlKey && e.key==='u'){e.preventDefault();return false;}
+  // Ctrl+S (save)
+  if(e.ctrlKey && e.key==='s'){e.preventDefault();return false;}
+  // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C (dev tools)
+  if(e.ctrlKey && e.shiftKey && (e.key==='I'||e.key==='i'||e.key==='J'||e.key==='j'||e.key==='C'||e.key==='c')){e.preventDefault();return false;}
+});
+
 // ═══════════════════════════════════════════════
 //  DATA CONSTANTS (declared first, used everywhere)
 // ═══════════════════════════════════════════════
@@ -2044,6 +2071,14 @@ buildNav();
 selectSlide(8);
 
 
+function toggleNav(){
+  var nav=document.getElementById('nav');
+  var btn=document.getElementById('navToggle');
+  nav.classList.toggle('collapsed');
+  var isCollapsed=nav.classList.contains('collapsed');
+  btn.innerHTML=isCollapsed?'&#9776;':'&#9666;';
+  btn.title=isCollapsed?'Show sidebar':'Hide sidebar';
+}
 function toggleNomen(){document.getElementById('nomen-panel').classList.toggle('open');}
 function filterNomen(q){
   var ql=q.toLowerCase().trim();
